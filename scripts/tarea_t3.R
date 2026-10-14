@@ -127,6 +127,20 @@ bind_rows(todos = tidy(m2), sin_cook = tidy(m2_sin), .id = "muestra") |>
 # con una muestra tan chica, los resultados son poco precisos y pueden
 # depender de pocos casos.
 
+# A6. Interpretación de la Parte A ---------------------------------------------
+# En el modelo con controles, cada año adicional de educación se asocia con
+# $42.246 más de ingreso mensual, en promedio, manteniendo experiencia y género
+# constantes (IC 95 %: 29.487 a 55.004).
+#
+# El coeficiente de generoM es 55.686. Esto significa que, a igual educación y
+# experiencia, los hombres se asocian con un ingreso en promedio $55.686 mayor
+# que las mujeres. Pero su IC va de -31.246 a 142.618 e incluye el cero
+# (p = 0,20), así que no es significativo al 5 %.
+#
+# Significancia vs importancia: generoM es grande (55.686 pesos) pero no es
+# significativo. Con n = 55 esto no significa que la diferencia no exista,
+# sino que no tenemos suficientes datos para distinguirla de cero con precisión.
+
 # =============================================================================
 # PARTE B — ENE
 # =============================================================================
