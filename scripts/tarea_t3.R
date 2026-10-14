@@ -128,3 +128,32 @@ ocupados |>
             informalidad = round(weighted.mean(informal, fact_cal), 3))
 # ✅ Deberías ver: 58 · 96 · 41697 · 0.265
 #    (41850 - 153 = 41697: esas 153 personas las descartará lm() por tener NA)
+
+
+# B3. Modelos -----------------------------------------------------------------
+# Muestra común: dejo solo personas con educación y rama válidas, para que
+# los DOS modelos usen exactamente las mismas personas. Si no, el cambio en
+# el coeficiente podría deberse a que cambió la muestra y no a los controles.
+ocupados_mod <- ocupados |>
+  filter(!is.na(educacion), !is.na(rama))
+
+nrow(ocupados_mod)
+# ✅ Deberías ver: 41697
+
+# Modelo base: educación + edad (edad^2 porque la informalidad tiene forma de U
+# con la edad, como vimos en el lab). Ponderado con fact_cal.
+m_base <- lm(informal ~ educacion + edad + I(edad^2),
+             data = ocupados_mod, weights = fact_cal)
+
+# Modelo con controles: agrego sexo, región y rama de actividad.
+# rama es el control nuevo (el lab no la usó).
+m_ctrl <- lm(informal ~ educacion + edad + I(edad^2) + mujer + region + rama,
+             data = ocupados_mod, weights = fact_cal)
+
+# Vistazo rápido: solo los coeficientes de educación, en puntos porcentuales.
+tidy(m_ctrl) |>
+  filter(grepl("educacion", term)) |>       # grepl: términos que contienen "educacion"
+  mutate(pp = round(100 * estimate, 1)) |>  # x 100 -> puntos porcentuales
+  select(term, pp)
+# ✅ Deberías ver: Básica o menos 15.9 · Técnica superior -9.1 ·
+#                 Universitaria o más -11.4
