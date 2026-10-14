@@ -198,3 +198,22 @@ tidy(m_int, conf.int = TRUE) |>
   select(term, estimate, conf.low, conf.high, p.value)
 # ✅ Deberías ver: Básica:mujer 3.2 (p 0.009) · Técnica:mujer 0.3 (p 0.814) ·
 #                 Universitaria:mujer -3.3 (p 0.001)
+
+# B5. Sensibilidad: con y sin el control de rama ------------------------------
+# Decisión que pruebo: ¿incluir o no la rama de actividad? Estimo el modelo con
+# controles SIN rama y comparo el coeficiente de educación con el que SÍ la tiene.
+m_sin_rama <- lm(informal ~ educacion + edad + I(edad^2) + mujer + region,
+                 data = ocupados_mod, weights = fact_cal)
+
+bind_rows(sin_rama = tidy(m_sin_rama),
+          con_rama = tidy(m_ctrl),
+          .id = "modelo") |>
+  filter(grepl("^educacion", term)) |>
+  mutate(pp = round(100 * estimate, 1)) |>
+  select(modelo, term, pp) |>
+  tidyr::pivot_wider(names_from = modelo, values_from = pp) |>  # una columna por modelo
+  mutate(cambio_pp = con_rama - sin_rama)                         # cuánto se mueve
+# ✅ Deberías ver:
+#    Básica o menos       sin_rama 18.2 · con_rama 15.9 · cambio -2.3
+#    Técnica superior     sin_rama -11.6 · con_rama -9.1 · cambio  2.5
+#    Universitaria o más  sin_rama -16.7 · con_rama -11.4 · cambio  5.3
