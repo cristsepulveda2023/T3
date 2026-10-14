@@ -146,7 +146,10 @@ bind_rows(todos = tidy(m2), sin_cook = tidy(m2_sin), .id = "muestra") |>
 # =============================================================================
 
 # B1. Pregunta ----------------------------------------------------------------
-# ____ (escríbela tú, con lenguaje "se asocia")
+# ¿Cuánto cambia la probabilidad de ser informal según el nivel educacional
+# entre las personas ocupadas en Chile? ¿Cuánto de esa diferencia se mantiene
+# al comparar personas de la misma edad, sexo, región y rama de actividad?
+# ¿Y es distinta entre hombres y mujeres?
 
 
 # B2. Cargar la base ----------------------------------------------------------
