@@ -75,6 +75,57 @@ cor(casen$experiencia, casen$ingreso, use = "complete.obs") # ✅ -0.088
 # la educación (cor = -0,156) ni con el ingreso (cor = -0,088). Como no cumple
 # las dos condiciones, agregarla no mueve el coeficiente de educación.
 
+# A5. Diagnóstico con augment() ------------------------------------------------
+# augment() devuelve una fila por persona usada en el modelo, con lo que el
+# modelo predijo (.fitted), el error (.resid), el apalancamiento (.hat) y la
+# distancia de Cook (.cooksd). .rownames = número de fila ORIGINAL en casen
+# (lm() descartó las 5 filas con NA, así que la numeración ya no es 1, 2, 3...).
+
+# 1) Las tres personas peor predichas: mayor error, sin importar el signo.
+augment(m2) |>
+  mutate(sector = casen$sector[as.numeric(.rownames)],  # traigo el sector desde casen
+         across(c(.fitted, .resid), round)) |>
+  arrange(desc(abs(.resid))) |>                         # abs(): tamaño del error
+  select(.rownames, ingreso, .fitted, .resid, educ, experiencia, genero, sector) |>
+  head(3)
+# ✅ Deberías ver: filas 47, 51 y 40, con residuos -298210, -296393 y -249293.
+#
+# Los tres tienen en común que son hombres, trabajan en agricultura y tienen
+# más de 30 años de experiencia. Tienen residuo negativo, o sea, ganan menos de
+# lo que el modelo predice. Esto puede pasar porque m2 no incluye el sector, y
+# la agricultura paga menos que otros sectores.
+
+# 2) Máxima distancia de Cook y máximo apalancamiento.
+augment(m2) |>
+  summarise(max_cook = max(.cooksd),
+            max_hat  = max(.hat))
+# ✅ Deberías ver: max_cook 0.0869 · max_hat 0.175
+
+# 3) Re-estimar m2 SIN la persona con mayor distancia de Cook.
+#    Guardo su fila en un objeto en vez de escribir el número a mano: si los
+#    datos cambian, el código sigue funcionando.
+fila_cook <- augment(m2) |>
+  slice_max(.cooksd, n = 1) |>      # la de mayor Cook
+  pull(.rownames) |>                # saco su número de fila
+  as.numeric()
+fila_cook
+# ✅ Deberías ver: 43
+
+m2_sin <- casen |>
+  filter(row_number() != fila_cook) |>               # todos menos esa fila
+  lm(ingreso ~ educ + experiencia + genero, data = _) # _ = los datos del pipe
+
+bind_rows(todos = tidy(m2), sin_cook = tidy(m2_sin), .id = "muestra") |>
+  filter(term == "educ") |>
+  mutate(estimate = round(estimate)) |>
+  select(muestra, estimate, p.value)
+# ✅ Deberías ver: todos 42246 · sin_cook 45218 (sube unos 3.000 pesos, un 7 %)
+#
+# Al sacar la persona con mayor distancia de Cook, el coeficiente de educación
+# pasa de 42.246 a 45.218 y sigue siendo significativo, así que la conclusión
+# no cambia. Pero que una sola persona de 55 lo mueva en un 7 % muestra que,
+# con una muestra tan chica, los resultados son poco precisos y pueden
+# depender de pocos casos.
 
 # =============================================================================
 # PARTE B — ENE
