@@ -372,3 +372,21 @@ modelsummary(modelos_ene,
              output    = "data.frame") |>
   write.csv("data/processed/t3_tabla_ene.csv", row.names = FALSE)
 
+# B6. Interpretación de la Parte B ---------------------------------------------
+# La informalidad promedio de los ocupados es 26,5 %. En el modelo base, frente a
+# quien tiene educación media, tener básica o menos se asocia con una probabilidad
+# de ser informal 18,1 pp mayor, y tener universitaria o más con una 16,4 pp menor.
+# Al comparar personas de la misma edad, sexo, región y rama, estas diferencias se
+# reducen (15,9 pp y -11,4 pp): el modelo base responde cuánto difieren los grupos
+# educacionales y el con controles, cuánto difieren personas similares. La rama es
+# la que más mueve el resultado (universitaria pasa de -16,7 a -11,4 pp), lo que
+# sugiere que parte de la asociación se debe a que los universitarios trabajan en
+# ramas más formales. En mujeres, la diferencia es mayor: 3,3 pp más en
+# universitaria y 3,2 pp más en básica. Con 41.697 observaciones casi todo es
+# significativo, pero estos coeficientes además son grandes: cerca de la mitad de
+# la informalidad promedio. Limitaciones: (1) los errores estándar de lm() con
+# weights no consideran el diseño muestral de la ENE (estratos y conglomerados),
+# así que los IC son más estrechos de lo que deberían; (2) es un solo trimestre y
+# faltan variables que la ENE no mide (como experiencia real o ingreso), por lo
+# que no es una relación causal; (3) el modelo de probabilidad lineal puede
+# predecir valores bajo 0 % o sobre 100 %.
