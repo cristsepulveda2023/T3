@@ -52,7 +52,7 @@ T3/
 - **Herramienta utilizada:** Claude (Anthropic).
 - **Para qué la usé:**
   - Proponer ideas de pregunta para la Parte B y revisar que no se parecieran al laboratorio.
-  - Generar el código base de cada etapa, que luego corrí, verifiqué con los resultados esperados y comenté.
+  - Ayudarme a escribir el código base de cada etapa, que luego corrí, verifiqué con los resultados esperados y comenté.
   - Explicar funciones y conceptos (`read.csv2`, `case_when`, `augment`, distancia de Cook, R² ajustado, interacciones, modelo de probabilidad lineal).
   - Depurar errores: la ruta del archivo (se resolvió con un proyecto `.Rproj`) y la exportación a CSV con `modelsummary` ("objeto 'd' no encontrado").
   - Guiarme con preguntas y plantillas para redactar las interpretaciones, y corregir errores de signo, de unidades (pp) y de lenguaje causal en mis respuestas.
