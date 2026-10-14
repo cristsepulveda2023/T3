@@ -15,7 +15,28 @@ library(modelsummary)
 # =============================================================================
 # PARTE A — CASEN
 # =============================================================================
-# (la dejamos para después)
+# # A1. Dos modelos --------------------------------------------------------------
+# experiencia potencial de Mincer: años desde que terminó de estudiar.
+# pmax(..., 0) evita experiencias negativas (si alguien tuviera edad < educ + 6).
+casen <- read.csv("data/raw/casen_reducido.csv") |>
+  mutate(experiencia = pmax(edad - educ - 6, 0))
+
+m1 <- lm(ingreso ~ educ, data = casen)                            # simple
+m2 <- lm(ingreso ~ educ + experiencia + genero, data = casen)     # con controles
+# lm() descarta solo las 5 filas con ingreso NA -> n = 55.
+
+# A2. Tabla de coeficientes de m2 (sin summary, en un solo pipe) ----------------
+tidy(m2, conf.int = TRUE) |>                         # coeficientes + IC 95 %
+  filter(term != "(Intercept)") |>                   # sin el intercepto
+  mutate(across(c(estimate, conf.low, conf.high), round),   # a pesos enteros
+         p.value       = round(p.value, 4),
+         significativo = p.value < 0.05) |>          # columna lógica: TRUE si p < 5 %
+  select(term, estimate, conf.low, conf.high, p.value, significativo) |>
+  arrange(p.value)                                   # el más significativo arriba
+# ✅ Deberías ver:
+#    educ          42246   29487   55004  0.0000  TRUE
+#    generoM       55686  -31246  142618  0.2043  FALSE
+#    experiencia    -517   -3408    2375  0.7213  FALSE
 
 
 # =============================================================================
@@ -236,7 +257,13 @@ modelsummary(modelos_ene,
 
 # C2. Exportar a CSV -----------------------------------------------------------
 dir.create("data/processed", showWarnings = FALSE)   # crea la carpeta si no existe
+
+# Exportar directo a .csv con modelsummary dio error ("objeto 'd' no encontrado"),
+# así que lo hago en dos pasos: 1) pido la tabla como data frame,
+# 2) la guardo con write.csv().
 modelsummary(modelos_ene,
              coef_omit = "region|rama",
              gof_map   = c("nobs", "r.squared"),
-             output    = "data/processed/t3_tabla_ene.csv")
+             output    = "data.frame") |>
+  write.csv("data/processed/t3_tabla_ene.csv", row.names = FALSE)
+
