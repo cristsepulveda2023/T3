@@ -38,6 +38,43 @@ tidy(m2, conf.int = TRUE) |>                         # coeficientes + IC 95 %
 #    generoM       55686  -31246  142618  0.2043  FALSE
 #    experiencia    -517   -3408    2375  0.7213  FALSE
 
+# A3. Tercer modelo: perfil cóncavo de Mincer ----------------------------------
+# I(experiencia^2) permite que el ingreso suba con la experiencia pero cada vez
+# menos (curva que se aplana). I() le dice a R: "calcula esto antes de modelar".
+m3 <- lm(ingreso ~ educ + experiencia + I(experiencia^2) + genero, data = casen)
+
+modelos <- list(simple = m1, controles = m2, mio = m3)
+lapply(modelos, glance) |>
+  bind_rows(.id = "modelo") |>
+  select(modelo, r.squared, adj.r.squared, nobs)
+# ✅ Deberías ver:
+#    simple     0.458  0.448  55
+#    controles  0.475  0.444  55
+#    mio        0.481  0.440  55
+#
+# Al agregar variables, el R² sube pero el R² ajustado baja. Eso significa que
+# la experiencia y la experiencia² no aportan a explicar el ingreso. Por lo
+# tanto, mi modelo no mejora, y con solo 55 personas agregar variables
+# le resta precisión al modelo sin explicar más.
+
+
+# A4. ¿Cambió el coeficiente de educación? -------------------------------------
+lapply(modelos, tidy) |>
+  bind_rows(.id = "modelo") |>
+  filter(term == "educ") |>
+  mutate(estimate = round(estimate)) |>
+  select(modelo, estimate, p.value)
+# ✅ Deberías ver: simple 42080 · controles 42246 · mio 42690
+
+# Dato para tu comentario:
+cor(casen$educ, casen$experiencia)                          # ✅ -0.156
+cor(casen$experiencia, casen$ingreso, use = "complete.obs") # ✅ -0.088
+#
+# El coeficiente de educación casi no cambia entre los tres modelos (42.080,
+# 42.246 y 42.690). Esto pasa porque la experiencia casi no tiene relación con
+# la educación (cor = -0,156) ni con el ingreso (cor = -0,088). Como no cumple
+# las dos condiciones, agregarla no mueve el coeficiente de educación.
+
 
 # =============================================================================
 # PARTE B — ENE
