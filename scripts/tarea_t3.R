@@ -217,3 +217,26 @@ bind_rows(sin_rama = tidy(m_sin_rama),
 #    Básica o menos       sin_rama 18.2 · con_rama 15.9 · cambio -2.3
 #    Técnica superior     sin_rama -11.6 · con_rama -9.1 · cambio  2.5
 #    Universitaria o más  sin_rama -16.7 · con_rama -11.4 · cambio  5.3
+
+# =============================================================================
+# PARTE C — Comunicar
+# =============================================================================
+
+# C1. Tabla de los modelos de la Parte B lado a lado ---------------------------
+modelos_ene <- list("Base"          = m_base,
+                    "Con controles" = m_ctrl,
+                    "Interacción"   = m_int)
+
+modelsummary(modelos_ene,
+             stars    = TRUE,                     # * p<0.1, ** p<0.05, *** p<0.01
+             coef_omit = "region|rama",           # oculto las 35 filas de región y rama
+             gof_map  = c("nobs", "r.squared"))   # solo n y R² abajo
+# Nota: region y rama SÍ están en los modelos; solo las oculto para que la
+# tabla sea legible. Lo dice la fila de abajo de cada modelo (nobs, R²).
+
+# C2. Exportar a CSV -----------------------------------------------------------
+dir.create("data/processed", showWarnings = FALSE)   # crea la carpeta si no existe
+modelsummary(modelos_ene,
+             coef_omit = "region|rama",
+             gof_map   = c("nobs", "r.squared"),
+             output    = "data/processed/t3_tabla_ene.csv")
