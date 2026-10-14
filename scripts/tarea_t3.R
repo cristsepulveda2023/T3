@@ -65,16 +65,19 @@ ocupados_crudo |>
 
 # 2) Distribución completa de las dos variables nuevas (las que el lab no usó).
 #    count() muestra cada código y cuántas personas tiene.
+
 ocupados_crudo |> count(cine11_1d)          # educación: 0 a 6, y el 9
 ocupados_crudo |> count(r_p_rev4cl_caenes)  # rama: 1 a 21, y el 999
 
-# ✏️ Anota aquí con tus palabras qué encontraste y qué harás con el 9 y el 999:
-# ____
+# Encontré que informal, edad, sexo y región están limpias. Educación tiene
+# 58 casos con 9 y rama tiene 96 con 999, que significan "sin clasificación".
+# Los paso a NA porque no son niveles reales; son pocos casos (<0,5 %).
 
 
 # B2. Crear las variables del modelo ------------------------------------------
 # Nombres para que region y rama queden como TEXTO (no como números 1 a 16).
 # El orden sigue los códigos del manual: el código 1 es el primer nombre, etc.
+
 regiones <- c("Tarapacá", "Antofagasta", "Atacama", "Coquimbo", "Valparaíso",
               "O'Higgins", "Maule", "Biobío", "La Araucanía", "Los Lagos",
               "Aysén", "Magallanes", "Metropolitana", "Los Ríos",
@@ -134,6 +137,7 @@ ocupados |>
 # Muestra común: dejo solo personas con educación y rama válidas, para que
 # los DOS modelos usen exactamente las mismas personas. Si no, el cambio en
 # el coeficiente podría deberse a que cambió la muestra y no a los controles.
+
 ocupados_mod <- ocupados |>
   filter(!is.na(educacion), !is.na(rama))
 
@@ -157,3 +161,40 @@ tidy(m_ctrl) |>
   select(term, pp)
 # ✅ Deberías ver: Básica o menos 15.9 · Técnica superior -9.1 ·
 #                 Universitaria o más -11.4
+
+# B4. Extraer y comparar con broom + dplyr ------------------------------------
+
+# 1) Coeficientes de educación en ambos modelos, lado a lado, en pp con IC 95 %.
+bind_rows(base      = tidy(m_base, conf.int = TRUE),
+          controles = tidy(m_ctrl, conf.int = TRUE),
+          .id = "modelo") |>                       # .id: columna con el nombre del modelo
+  filter(grepl("^educacion", term)) |>             # ^ = que EMPIECE con "educacion"
+  mutate(across(c(estimate, conf.low, conf.high),
+                ~ round(100 * .x, 1))) |>          # las tres columnas a pp
+  select(modelo, term, estimate, conf.low, conf.high) |>
+  arrange(term, modelo)                            # cada nivel con sus dos modelos juntos
+# ✅ Deberías ver (estimate):
+#    Básica o menos       base 18.1 · controles 15.9
+#    Técnica superior     base -11.0 · controles -9.1
+#    Universitaria o más  base -16.4 · controles -11.4
+
+# 2) Ajuste de ambos modelos apilado.
+list(base = m_base, controles = m_ctrl) |>
+  lapply(glance) |>                                # glance() a cada modelo
+  bind_rows(.id = "modelo") |>
+  select(modelo, r.squared, adj.r.squared, nobs)
+# ✅ Deberías ver: base 0.103 / 0.102 · controles 0.137 / 0.136 · nobs 41697
+
+# 3) Interacción: ¿la asociación educación-informalidad es distinta en mujeres?
+#    educacion * mujer = educacion + mujer + educacion:mujer (el término extra
+#    mide cuánto CAMBIA la diferencia por educación si la persona es mujer).
+m_int <- lm(informal ~ educacion * mujer + edad + I(edad^2) + region + rama,
+            data = ocupados_mod, weights = fact_cal)
+
+tidy(m_int, conf.int = TRUE) |>
+  filter(grepl(":mujer", term)) |>                 # solo los términos de interacción
+  mutate(across(c(estimate, conf.low, conf.high), ~ round(100 * .x, 1)),
+         p.value = round(p.value, 3)) |>
+  select(term, estimate, conf.low, conf.high, p.value)
+# ✅ Deberías ver: Básica:mujer 3.2 (p 0.009) · Técnica:mujer 0.3 (p 0.814) ·
+#                 Universitaria:mujer -3.3 (p 0.001)
